@@ -53,6 +53,7 @@
 ```bash
 cd sdh-chat-backend
 yarn
+mkdir uploads
 cp .env.example .env
 # Ajusta si necesitas:
 # PORT=3000
