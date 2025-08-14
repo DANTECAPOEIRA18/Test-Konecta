@@ -62,7 +62,7 @@
   - `ChatGateway`: conexión de sockets, broadcast de usuarios, mensajes privados
   - `ChatService`: usuarios en memoria y simple historial; normaliza nicks para que sean únicos
   - Emite `nick_assigned` al conectar para informar el nick final
-  - Gestiona los archivos compartidos entre lso usaurios
+  - Gestiona los archivos compartidos entre los usuarios
 
 ---
 
