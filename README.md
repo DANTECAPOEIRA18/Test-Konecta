@@ -19,6 +19,22 @@
   <img src="./docs/img/chat-convo.png" alt="Conversación 1-1" width="85%" />
 </p>
 
+<p align="center">
+  <img src="./docs/img/chat-attachfile.png" alt="Conversación 1-2" width="85%" />
+</p>
+
+<p align="center">
+  <img src="./docs/img/chat-fileattached.png" alt="Conversación 1-3" width="85%" />
+</p>
+
+<p align="center">
+  <img src="./docs/img/chat-filerecived.png" alt="Conversación 1-4" width="85%" />
+</p>
+
+<p align="center">
+  <img src="./docs/img/chat-userfind.png" alt="Filtro de usuarios" width="85%" />
+</p>
+
 ---
 
 ## ✨ Características
@@ -26,6 +42,8 @@
 - 🔵 **Tiempo real** con Socket.IO
 - 👤 **Nicks únicos:** si un nick existe, el servidor asigna `Nick (2)`, `Nick (3)`, etc.
 - 🔔 **No leídos por usuario:** se incrementan cuando llega un mensaje y el chat no está abierto; se limpian al abrir ese chat
+- 🔔 **Sonido de mensaje nuevo:** se produce un sonido cuando los usuarios reciben un nuevo mensaje
+- 📚 **Funcion de adjuntar archivos o imagenes:** se agrega funcion para compartir archivos tipo imagenes, pdf o excel entre usuarios
 - ⏱️ **Timestamps** por mensaje
 - 🧊 **UI glass/blue** + **avatar** del usuario actual en el header
 - 📚 **Swagger** en `http://localhost:3000/api` para probar endpoints HTTP
@@ -44,6 +62,7 @@
   - `ChatGateway`: conexión de sockets, broadcast de usuarios, mensajes privados
   - `ChatService`: usuarios en memoria y simple historial; normaliza nicks para que sean únicos
   - Emite `nick_assigned` al conectar para informar el nick final
+  - Gestiona los archivos compartidos entre lso usaurios
 
 ---
 
