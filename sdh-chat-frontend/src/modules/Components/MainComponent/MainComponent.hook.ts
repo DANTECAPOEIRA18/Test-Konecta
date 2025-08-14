@@ -1,15 +1,18 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { io, Socket } from 'socket.io-client'
+import { FileMeta } from '../Chatwindow/ChatWindow.Types'
 import { User, Message, backend } from './MainComponet.Types'
+import { useBeep } from '../../Hooks/useBeep.hook'
 
 export const useMaincomponent = () => {
-    
+
       const [me, setMe] = useState<User | null>(null)
       const [users, setUsers] = useState<User[]>([])
       const [selected, setSelected] = useState<User | null>(null)
       const [socket, setSocket] = useState<Socket | null>(null)
       const [messages, setMessages] = useState<Message[]>([])
-    
+      const [query, setQuery] = useState('')
+      const beep = useBeep();
       // Mantener referencia al chat seleccionado para usar dentro de listeners
       const selectedRef = useRef<string | null>(null)
       useEffect(() => {
@@ -42,8 +45,9 @@ export const useMaincomponent = () => {
                 prev.map((u) =>
                   u.id === msg.from ? { ...u, unreadCount: (u.unreadCount || 0) + 1 } : u,
                 ),
-              )
+              )           
             }
+            beep();
           }
         })
     
@@ -84,6 +88,29 @@ export const useMaincomponent = () => {
         )
       }, [messages, selected, socket?.id])
 
+      const sendFile = useCallback((meta: FileMeta) => {
+        if (!socket || !selected) return
+        socket.emit('private_message', { to: selected.id, content: '', kind: 'file', file: meta })
+        }, [socket, selected])
+
+        // --- filtro de usuarios ---
+
+      const handleSetQuery = (data: string) => {
+        setQuery(data);
+      }
+
+      const normalize = (s: string) =>
+          (s ?? '')
+            .toLowerCase()
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '') // strip acentos
+      
+      const filteredUsers = useMemo(() => {
+          const q = normalize(query.trim())
+          if (!q) return users
+          return users.filter((u) => normalize(u.nick).includes(q))
+      }, [users, query])
+
       return {
         me,
         users,
@@ -94,6 +121,10 @@ export const useMaincomponent = () => {
         handleConfirmNick,
         startChat,
         send,
-        convo
+        convo,
+        sendFile,
+        filteredUsers,
+        handleSetQuery,
+        query
       }
 }

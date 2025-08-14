@@ -25,14 +25,26 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     this.server.emit('users', this.chat.getUsers())
   }
 
-  @SubscribeMessage('private_message')
-  onPrivateMessage(client: Socket, payload: Message) {
-    // enforce server timestamp for consistency
-    const msg = { ...payload, from: client.id, timestamp: new Date().toISOString() }
-    this.chat.pushMessage(msg)
-    // send to recipient
-    this.server.to(msg.to).emit('private_message', msg)
-    // echo to sender (client already adds locally, but this keeps consistency if desired)
-    client.emit('private_message', msg)
+@SubscribeMessage('private_message')
+onPrivateMessage(client: Socket, payload: Partial<Message>) {
+  // Validación mínima
+  if (!payload?.to) return
+
+  // El servidor siempre fija el remitente y el timestamp
+  const msg: Message = {
+    from: client.id,
+    to: String(payload.to),
+    content: String(payload.content ?? ''),
+    timestamp: new Date().toISOString(),
+    // Soportar adjuntos
+    kind: payload.kind ?? 'text',
+    file: payload.file,
   }
+
+  this.chat.pushMessage(msg)
+  // Entregar al receptor
+  this.server.to(msg.to).emit('private_message', msg)
+  // Echo al emisor (mantiene consistencia UI)
+  client.emit('private_message', msg)
+}
 }

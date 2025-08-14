@@ -1,5 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState, FC } from 'react'
-import { io, Socket } from 'socket.io-client'
+import { FC, useState, useMemo } from 'react'
 import {
   AppBar,
   Toolbar,
@@ -15,28 +14,39 @@ import {
   ListItemButton,
   ListItemText,
   Badge,
+  TextField,
+  InputAdornment,
+  IconButton,
 } from '@mui/material'
+import SearchIcon from '@mui/icons-material/Search'
+import ClearIcon from '@mui/icons-material/Clear'
 import ChatWindow from '../Chatwindow/ChatWindow'
 import imageBackGround from '../../../assets/imageBackGround.jpg'
 import LoginHero from '../LoginHero/LoginHero'
 import { useMaincomponent } from './MainComponent.hook'
-import { getInitial } from './MainComponet.Types';
-
-
-
+import { getInitial } from './MainComponet.Types'
 
 // --- App principal ---
-const MainComponent : FC = () => {
-  
-  const {convo, handleConfirmNick, me, selected, send, socket, startChat, users} = useMaincomponent();
+const MainComponent: FC = () => {
+  const { 
+    convo, 
+    handleConfirmNick, 
+    me, 
+    selected, 
+    send, 
+    socket, 
+    startChat, 
+    filteredUsers,
+    query,
+    handleSetQuery, 
+    sendFile } =
+    useMaincomponent()
 
   return (
     <>
       <CssBaseline />
-
-      {/* === Fondo azul glass para TODA la página (fuera de las cajas) === */}
+      {/* Fondo azul glass */}
       <Box sx={{ position: 'relative', minHeight: '100vh', overflow: 'hidden' }}>
-        {/* Capa base: gradientes azules */}
         <Box
           sx={{
             position: 'absolute',
@@ -49,7 +59,6 @@ const MainComponent : FC = () => {
             `,
           }}
         />
-        {/* Capa glass: blur y saturación sobre el gradiente */}
         <Box
           sx={{
             position: 'absolute',
@@ -61,15 +70,13 @@ const MainComponent : FC = () => {
           }}
         />
 
-        {/* Contenido de la app */}
+        {/* Contenido */}
         <Container maxWidth="lg" sx={{ py: 3, position: 'relative', zIndex: 1 }}>
-          {/* Barra superior con avatar y nombre del usuario actual */}
           <AppBar position="static" elevation={0} color="transparent" sx={{ mb: 2 }}>
             <Toolbar sx={{ px: 0, display: 'flex', gap: 2 }}>
               <Typography variant="h4" sx={{ fontWeight: 700, flex: 1 }}>
                 SDH Chat — Real-time
               </Typography>
-
               {me && (
                 <Tooltip title={`Logged in as ${me.nick}`}>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
@@ -85,38 +92,98 @@ const MainComponent : FC = () => {
           </AppBar>
 
           {!me ? (
-            <LoginHero onConfirm={handleConfirmNick} heroUrl={imageBackGround}/>
+            <LoginHero onConfirm={handleConfirmNick} heroUrl={imageBackGround} />
           ) : (
-            <Box sx={{ display: 'grid', gridTemplateColumns: '300px 1fr', gap: 2, height: '70vh' }}>
-              {/* Lista de usuarios */}
-              <Paper sx={{ p: 2, overflow: 'auto' }}>
+            <Box
+              sx={{
+                display: 'grid',
+                gridTemplateColumns: '300px 1fr',
+                gap: 2,
+                height: '70vh',
+                minHeight: 0, // permite que la columna se encoja y aparezca el scroll
+              }}
+            >
+              {/* Panel de usuarios con buscador y lista scrollable */}
+              <Paper
+                sx={{
+                  p: 2,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  minHeight: 0, // necesario para que la <List> pueda hacer scroll
+                }}
+              >
                 <Typography variant="h6" sx={{ mb: 1 }}>
                   Connected users
                 </Typography>
-                <List dense>
-                  {users.map((u) => (
-                    <ListItemButton
-                      key={u.id}
-                      selected={selected?.id === u.id}
-                      onClick={() => startChat(u)}
-                    >
-                      <Badge
-                        overlap="circular"
-                        color="primary"
-                        badgeContent={u.unreadCount ?? 0}
-                        invisible={!u.unreadCount}
-                        sx={{ mr: 1.25 }}
+
+                {/* Buscador */}
+                <TextField
+                  size="small"
+                  placeholder="Search user…"
+                  value={query}
+                  onChange={(e) => handleSetQuery(e.target.value)}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <SearchIcon fontSize="small" />
+                      </InputAdornment>
+                    ),
+                    endAdornment: query ? (
+                      <InputAdornment position="end">
+                        <IconButton size="small" onClick={() => handleSetQuery('')} edge="end">
+                          <ClearIcon fontSize="small" />
+                        </IconButton>
+                      </InputAdornment>
+                    ) : undefined,
+                  }}
+                  sx={{ mb: 1 }}
+                />
+
+                {/* Lista con scroll */}
+                <List
+                  dense
+                  sx={{
+                    flex: 1,
+                    minHeight: 0,
+                    overflowY: 'auto',
+                    pr: 0.5,
+                  }}
+                >
+                  {filteredUsers.length === 0 ? (
+                    <Typography variant="body2" color="text.secondary" sx={{ px: 1, py: 0.5 }}>
+                      No users found
+                    </Typography>
+                  ) : (
+                    filteredUsers.map((u) => (
+                      <ListItemButton
+                        key={u.id}
+                        selected={selected?.id === u.id}
+                        onClick={() => startChat(u)}
                       >
-                        <Avatar sx={{ width: 28, height: 28 }}>{getInitial(u.nick)}</Avatar>
-                      </Badge>
-                      <ListItemText primary={u.nick} />
-                    </ListItemButton>
-                  ))}
+                        <Badge
+                          overlap="circular"
+                          color="primary"
+                          badgeContent={u.unreadCount ?? 0}
+                          invisible={!u.unreadCount}
+                          sx={{ mr: 1.25 }}
+                        >
+                          <Avatar sx={{ width: 28, height: 28 }}>{getInitial(u.nick)}</Avatar>
+                        </Badge>
+                        <ListItemText primary={u.nick} />
+                      </ListItemButton>
+                    ))
+                  )}
                 </List>
               </Paper>
 
               {/* Ventana de chat */}
-              <ChatWindow meId={socket?.id || ''} peer={selected} messages={convo} onSend={send} />
+              <ChatWindow
+                meId={socket?.id || ''}
+                peer={selected}
+                messages={convo}
+                onSend={send}
+                onSendFile={sendFile}
+              />
             </Box>
           )}
         </Container>
@@ -125,4 +192,4 @@ const MainComponent : FC = () => {
   )
 }
 
-export default MainComponent;
+export default MainComponent
